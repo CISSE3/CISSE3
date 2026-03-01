@@ -340,7 +340,7 @@ export default function DashboardScreen() {
                 {sale.items.length} item{sale.items.length !== 1 ? "s" : ""}
               </TableCell>
               <TableCell style={{ fontWeight: 700 }}>
-                ${sale.total.toFixed(2)}
+                {sale.total.toFixed(0)} €
               </TableCell>
               <TableCell>
                 <StatusBadge status={sale.status} />

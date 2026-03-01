@@ -7,7 +7,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useAppStore } from "@/providers/app.provider";
 import { Product, ProductInput, deriveStockStatus } from "@/models/product.model";
 import {
@@ -23,7 +23,8 @@ import {
   EmptyState,
   colors,
 } from "@/widgets/ui";
-import { Plus, Search, Edit2, Trash2, Package, Filter } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, Package, Filter, Image, X, Upload } from "lucide-react";
+import { useTranslation } from "@/i18n/provider";
 
 const CATEGORIES = [
   "Electronics",
@@ -49,6 +50,7 @@ function ProductFormDialog({
   product: Product | null;
   onSave: (data: ProductInput) => void;
 }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState<ProductInput>({
     name: product?.name ?? "",
     category: product?.category ?? CATEGORIES[0],
@@ -56,15 +58,32 @@ function ProductFormDialog({
     stock: product?.stock ?? 0,
     description: product?.description ?? "",
     sku: product?.sku ?? "",
+    image: product?.image ?? "",
   });
   const [errors, setErrors] = useState<Partial<Record<keyof ProductInput, string>>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setForm({ ...form, image: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setForm({ ...form, image: "" });
+  };
 
   const validate = () => {
     const e: typeof errors = {};
-    if (!form.name.trim()) e.name = "Product name is required";
-    if (!form.sku.trim()) e.sku = "SKU is required";
-    if (form.price <= 0) e.price = "Price must be greater than 0";
-    if (form.stock < 0) e.stock = "Stock cannot be negative";
+    if (!form.name.trim()) e.name = t.errors.required;
+    if (!form.sku.trim()) e.sku = t.errors.required;
+    if (form.price <= 0) e.price = t.errors.positiveNumber;
+    if (form.stock < 0) e.stock = t.errors.positiveNumber;
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -78,18 +97,84 @@ function ProductFormDialog({
     <Dialog
       open={open}
       onClose={onClose}
-      title={product ? "Edit Product" : "Add New Product"}
+      title={product ? t.products.editProduct : t.products.addProduct}
     >
       <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+        {/* Image Upload */}
+        <div>
+          <label style={{ fontSize: "13px", fontWeight: 600, color: "#49454F", display: "block", marginBottom: "8px" }}>
+            {t.products.image}
+          </label>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleImageUpload}
+            accept="image/*"
+            style={{ display: "none" }}
+          />
+          {form.image ? (
+            <div style={{ position: "relative", width: "120px", height: "120px" }}>
+              <img
+                src={form.image}
+                alt="Product"
+                style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "10px" }}
+              />
+              <button
+                type="button"
+                onClick={removeImage}
+                style={{
+                  position: "absolute",
+                  top: "-8px",
+                  right: "-8px",
+                  width: "24px",
+                  height: "24px",
+                  borderRadius: "50%",
+                  background: colors.error,
+                  color: "white",
+                  border: "none",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              style={{
+                width: "120px",
+                height: "120px",
+                border: "2px dashed #CAC4D0",
+                borderRadius: "10px",
+                background: "#F6F2FF",
+                cursor: "pointer",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "8px",
+                color: "#79747E",
+              }}
+            >
+              <Upload size={24} />
+              <span style={{ fontSize: "11px" }}>{t.products.uploadImage}</span>
+            </button>
+          )}
+        </div>
+
         <TextField
-          label="Product Name"
+          label={t.products.productName}
           value={form.name}
           onChange={(v) => setForm({ ...form, name: v })}
           required
           error={errors.name}
         />
         <TextField
-          label="SKU"
+          label={t.products.sku}
           value={form.sku}
           onChange={(v) => setForm({ ...form, sku: v })}
           required
@@ -98,7 +183,7 @@ function ProductFormDialog({
         />
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
           <TextField
-            label="Price ($)"
+            label={`${t.products.price} ($)`}
             value={form.price}
             onChange={(v) => setForm({ ...form, price: parseFloat(v) || 0 })}
             type="number"
@@ -106,7 +191,7 @@ function ProductFormDialog({
             error={errors.price}
           />
           <TextField
-            label="Stock Quantity"
+            label={t.products.stock}
             value={form.stock}
             onChange={(v) => setForm({ ...form, stock: parseInt(v) || 0 })}
             type="number"
@@ -115,14 +200,14 @@ function ProductFormDialog({
           />
         </div>
         <SelectField
-          label="Category"
+          label={t.products.category}
           value={form.category}
           onChange={(v) => setForm({ ...form, category: v })}
-          options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+          options={CATEGORIES.map((c) => ({ value: c, label: (t.products.categories as Record<string, string>)[c.toLowerCase().replace(" ", "")] || c }))}
           required
         />
         <TextField
-          label="Description"
+          label={t.products.description}
           value={form.description}
           onChange={(v) => setForm({ ...form, description: v })}
           multiline
@@ -131,10 +216,10 @@ function ProductFormDialog({
         />
         <div style={{ display: "flex", gap: "10px", marginTop: "4px" }}>
           <Button variant="outlined" onClick={onClose} fullWidth>
-            Cancel
+            {t.common.cancel}
           </Button>
           <Button type="submit" fullWidth>
-            {product ? "Update Product" : "Add Product"}
+            {product ? t.products.updateProduct : t.products.addProduct}
           </Button>
         </div>
       </form>
@@ -144,6 +229,7 @@ function ProductFormDialog({
 
 // ─── Products Screen ──────────────────────────────────────────────────────────
 export default function ProductsScreen() {
+  const { t } = useTranslation();
   const { products, upsertProduct, removeProduct } = useAppStore();
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("All");
@@ -200,13 +286,13 @@ export default function ProductsScreen() {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
         <div>
-          <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#1C1B1F" }}>Products</h2>
+          <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#1C1B1F" }}>{t.products.title}</h2>
           <p style={{ fontSize: "13px", color: "#79747E", marginTop: "2px" }}>
-            {products.length} total · {products.filter((p) => p.status === "low_stock").length} low stock · {products.filter((p) => p.status === "out_of_stock").length} out of stock
+            {products.length} {t.products.totalProducts} · {products.filter((p) => p.status === "low_stock").length} {t.products.lowStockItems} · {products.filter((p) => p.status === "out_of_stock").length} {t.products.outOfStockItems}
           </p>
         </div>
         <Button icon={<Plus size={16} />} onClick={openAdd}>
-          Add Product
+          {t.products.addProduct}
         </Button>
       </div>
 
@@ -229,7 +315,7 @@ export default function ProductsScreen() {
             <Search size={16} color="#79747E" />
             <input
               type="text"
-              placeholder="Search by name, SKU, or category..."
+              placeholder={t.products.searchPlaceholder}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{
@@ -260,8 +346,8 @@ export default function ProductsScreen() {
                 cursor: "pointer",
               }}
             >
-              <option value="All">All Categories</option>
-              {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+              <option value="All">{t.products.allCategories}</option>
+              {CATEGORIES.map((c) => <option key={c} value={c}>{(t.products.categories as Record<string, string>)[c.toLowerCase().replace(" ", "")] || c}</option>)}
             </select>
           </div>
 
@@ -280,10 +366,10 @@ export default function ProductsScreen() {
               cursor: "pointer",
             }}
           >
-            <option value="All">All Status</option>
-            <option value="in_stock">In Stock</option>
-            <option value="low_stock">Low Stock</option>
-            <option value="out_of_stock">Out of Stock</option>
+            <option value="All">{t.products.allStatus}</option>
+            <option value="in_stock">{t.products.inStock}</option>
+            <option value="low_stock">{t.products.lowStock}</option>
+            <option value="out_of_stock">{t.products.outOfStock}</option>
           </select>
 
           {/* View Toggle */}
@@ -303,7 +389,7 @@ export default function ProductsScreen() {
                   fontWeight: 500,
                 }}
               >
-                {mode === "table" ? "☰ Table" : "⊞ Grid"}
+                {mode === "table" ? "☰ " + t.products.tableView : "⊞ " + t.products.gridView}
               </button>
             ))}
           </div>
@@ -314,26 +400,34 @@ export default function ProductsScreen() {
       {viewMode === "table" ? (
         <Card style={{ padding: 0, overflow: "hidden" }}>
           <DataTable
-            headers={["Product", "SKU", "Category", "Price", "Stock", "Status", "Actions"]}
+            headers={[t.products.productName, t.products.sku, t.products.category, t.products.price, t.products.stock, t.products.status, t.common.actions]}
           >
             {filtered.map((product) => (
               <TableRow key={product.id}>
                 <TableCell>
                   <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-                    <div
-                      style={{
-                        width: "40px",
-                        height: "40px",
-                        borderRadius: "10px",
-                        background: colors.primaryContainer,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        flexShrink: 0,
-                      }}
-                    >
-                      <Package size={20} color={colors.primary} />
-                    </div>
+                    {product.image ? (
+                      <img
+                        src={product.image}
+                        alt={product.name}
+                        style={{ width: "40px", height: "40px", borderRadius: "10px", objectFit: "cover" }}
+                      />
+                    ) : (
+                      <div
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          borderRadius: "10px",
+                          background: colors.primaryContainer,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Package size={20} color={colors.primary} />
+                      </div>
+                    )}
                     <div>
                       <p style={{ fontWeight: 600, color: "#1C1B1F", fontSize: "14px" }}>
                         {product.name}
@@ -350,7 +444,7 @@ export default function ProductsScreen() {
                 </TableCell>
                 <TableCell style={{ color: "#49454F" }}>{product.category}</TableCell>
                 <TableCell style={{ fontWeight: 700, color: colors.primary }}>
-                  ${product.price.toFixed(2)}
+                  {product.price.toFixed(0)} €
                 </TableCell>
                 <TableCell>
                   <span
@@ -383,7 +477,7 @@ export default function ProductsScreen() {
                         gap: "4px",
                       }}
                     >
-                      <Edit2 size={12} /> Edit
+                      <Edit2 size={12} /> {t.common.edit}
                     </button>
                     {deleteId === product.id ? (
                       <div style={{ display: "flex", gap: "4px" }}>
@@ -399,7 +493,7 @@ export default function ProductsScreen() {
                             fontSize: "12px",
                           }}
                         >
-                          Confirm
+                          {t.common.confirm}
                         </button>
                         <button
                           onClick={() => setDeleteId(null)}
@@ -413,7 +507,7 @@ export default function ProductsScreen() {
                             fontSize: "12px",
                           }}
                         >
-                          Cancel
+                          {t.common.cancel}
                         </button>
                       </div>
                     ) : (
@@ -433,7 +527,7 @@ export default function ProductsScreen() {
                           gap: "4px",
                         }}
                       >
-                        <Trash2 size={12} /> Delete
+                        <Trash2 size={12} /> {t.common.delete}
                       </button>
                     )}
                   </div>
@@ -444,8 +538,8 @@ export default function ProductsScreen() {
           {filtered.length === 0 && (
             <EmptyState
               icon={<Package size={52} />}
-              title="No products found"
-              subtitle="Try adjusting your search or filters"
+              title={t.products.noProductsFound}
+              subtitle={t.products.tryAdjustingSearch}
             />
           )}
         </Card>
@@ -474,7 +568,9 @@ export default function ProductsScreen() {
               <div
                 style={{
                   height: "80px",
-                  background: `linear-gradient(135deg, ${colors.primaryContainer}, #E8DEF8)`,
+                  background: product.image 
+                    ? `url(${product.image}) center/cover` 
+                    : `linear-gradient(135deg, ${colors.primaryContainer}, #E8DEF8)`,
                   borderRadius: "8px",
                   display: "flex",
                   alignItems: "center",
@@ -482,7 +578,7 @@ export default function ProductsScreen() {
                   marginBottom: "14px",
                 }}
               >
-                <Package size={36} color={colors.primary} />
+                {!product.image && <Package size={36} color={colors.primary} />}
               </div>
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "8px" }}>
                 <div style={{ flex: 1 }}>
@@ -498,10 +594,10 @@ export default function ProductsScreen() {
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "12px" }}>
                 <div>
                   <p style={{ fontSize: "22px", fontWeight: 700, color: colors.primary }}>
-                    ${product.price.toFixed(2)}
+                    {product.price.toFixed(0)} €
                   </p>
                   <p style={{ fontSize: "12px", color: "#79747E" }}>
-                    {product.stock} units
+                    {product.stock} {t.products.stock.toLowerCase()}
                   </p>
                 </div>
                 <div style={{ display: "flex", gap: "6px" }}>
@@ -548,8 +644,8 @@ export default function ProductsScreen() {
               <Card>
                 <EmptyState
                   icon={<Package size={52} />}
-                  title="No products found"
-                  subtitle="Try adjusting your search or filters"
+                  title={t.products.noProductsFound}
+                  subtitle={t.products.tryAdjustingSearch}
                 />
               </Card>
             </div>

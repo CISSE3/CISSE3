@@ -13,6 +13,7 @@ export interface Product {
   stock: number;
   description: string;
   sku: string;
+  image?: string; // Product image URL (base64 or URL)
   status: "in_stock" | "low_stock" | "out_of_stock";
   createdAt: string; // ISO date string
   updatedAt: string;

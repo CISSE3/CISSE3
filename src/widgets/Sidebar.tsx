@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { useAppStore, Screen } from "@/providers/app.provider";
 import { colors } from "@/widgets/ui";
+import { useTranslation } from "@/i18n/provider";
 
 interface NavItem {
   id: Screen;
@@ -31,6 +32,7 @@ interface NavItem {
 export default function Sidebar() {
   const { activeScreen, setActiveScreen, sidebarOpen, toggleSidebar, products, sales } =
     useAppStore();
+  const { t } = useTranslation();
 
   const lowStockCount = products.filter(
     (p) => p.status === "low_stock" || p.status === "out_of_stock"
@@ -39,12 +41,12 @@ export default function Sidebar() {
   const pendingSalesCount = sales.filter((s) => s.status === "pending").length;
 
   const navItems: NavItem[] = [
-    { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { id: "products", label: "Products", icon: Package, badge: lowStockCount || undefined },
-    { id: "sales", label: "Sales", icon: ShoppingCart, badge: pendingSalesCount || undefined },
-    { id: "customers", label: "Customers", icon: Users },
-    { id: "reports", label: "Reports", icon: BarChart3 },
-    { id: "settings", label: "Settings", icon: Settings },
+    { id: "dashboard", label: t.nav.dashboard, icon: LayoutDashboard },
+    { id: "products", label: t.nav.products, icon: Package, badge: lowStockCount || undefined },
+    { id: "sales", label: t.nav.sales, icon: ShoppingCart, badge: pendingSalesCount || undefined },
+    { id: "customers", label: t.nav.customers, icon: Users },
+    { id: "reports", label: t.nav.reports, icon: BarChart3 },
+    { id: "settings", label: t.nav.settings, icon: Settings },
   ];
 
   return (
@@ -98,7 +100,7 @@ export default function Sidebar() {
                 lineHeight: 1.2,
               }}
             >
-              ShopManager
+              {t.nav.shopManager}
             </p>
             <p
               style={{
@@ -107,7 +109,7 @@ export default function Sidebar() {
                 whiteSpace: "nowrap",
               }}
             >
-              Pro Edition
+              {t.nav.proEdition}
             </p>
           </div>
         )}
@@ -250,7 +252,7 @@ export default function Sidebar() {
                 whiteSpace: "nowrap",
               }}
             >
-              Admin User
+              {t.auth.login === "Connexion" ? "Administrateur" : "Admin User"}
             </p>
             <p
               style={{

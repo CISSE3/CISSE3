@@ -240,7 +240,7 @@ function PurchaseHistoryDialog({
                   </p>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <p style={{ fontSize: "16px", fontWeight: 700 }}>${sale.total.toFixed(2)}</p>
+                  <p style={{ fontSize: "16px", fontWeight: 700 }}>{sale.total.toFixed(0)} €</p>
                   <StatusBadge status={sale.status} />
                 </div>
               </div>
@@ -432,7 +432,7 @@ export default function CustomersScreen() {
                 {customer.totalOrders}
               </TableCell>
               <TableCell style={{ fontWeight: 700, color: colors.primary }}>
-                ${customer.totalSpent.toFixed(2)}
+                {customer.totalSpent.toFixed(0)} €
               </TableCell>
               <TableCell>
                 <StatusBadge status={customer.status} />

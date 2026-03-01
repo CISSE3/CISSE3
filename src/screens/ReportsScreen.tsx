@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useAppStore } from "@/providers/app.provider";
 import { exportSalesToCSV, exportDailySummaryCSV, exportMonthlySummaryCSV } from "@/core/csv-export";
 import { Card, StatusBadge, DataTable, TableRow, TableCell, colors } from "@/widgets/ui";
+import { useTranslation } from "@/i18n/provider";
 import {
   BarChart,
   Bar,
@@ -48,6 +49,7 @@ const PAYMENT_COLORS: Record<string, string> = {
 };
 
 export default function ReportsScreen() {
+  const { t } = useTranslation();
   const { sales, products } = useAppStore();
   const [reportType, setReportType] = useState<"daily" | "monthly" | "all">("monthly");
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
@@ -239,10 +241,10 @@ export default function ReportsScreen() {
       {/* KPI Summary */}
       <div style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}>
         {[
-          { label: "Total Revenue", value: `$${totalRevenue.toFixed(2)}`, icon: DollarSign, color: colors.primary },
-          { label: "Total Orders", value: filteredSales.length.toString(), icon: FileText, color: "#03DAC6" },
-          { label: "Avg Order Value", value: `$${avgOrderValue.toFixed(2)}`, icon: TrendingUp, color: "#FF6D00" },
-          { label: "Total Tax Collected", value: `$${totalTax.toFixed(2)}`, icon: DollarSign, color: "#9C27B0" },
+          { label: t.reports.totalRevenue, value: `${totalRevenue.toFixed(0)} €`, icon: DollarSign, color: colors.primary },
+          { label: t.reports.totalOrders, value: filteredSales.length.toString(), icon: FileText, color: "#03DAC6" },
+          { label: t.reports.averageOrderValue, value: `${avgOrderValue.toFixed(0)} €`, icon: TrendingUp, color: "#FF6D00" },
+          { label: "Total Taxes", value: `${totalTax.toFixed(0)} €`, icon: DollarSign, color: "#9C27B0" },
         ].map((kpi) => {
           const Icon = kpi.icon;
           return (
@@ -285,7 +287,7 @@ export default function ReportsScreen() {
               <YAxis tick={{ fontSize: 12, fill: "#79747E" }} />
               <Tooltip
                 contentStyle={{ borderRadius: "10px", border: "none", boxShadow: "0 4px 16px rgba(0,0,0,0.12)" }}
-                formatter={(value) => [`$${Number(value).toFixed(2)}`, "Revenue"]}
+                formatter={(value) => [`${Number(value).toFixed(0)} €`, t.reports.totalRevenue]}
               />
               <Bar dataKey="revenue" fill={colors.primary} radius={[6, 6, 0, 0]} />
             </BarChart>
@@ -322,7 +324,7 @@ export default function ReportsScreen() {
                     <span style={{ fontSize: "12px", color: "#49454F" }}>{value}</span>
                   )}
                 />
-                <Tooltip formatter={(value) => [`$${Number(value).toFixed(2)}`, "Revenue"]} />
+                <Tooltip formatter={(value) => [`${Number(value).toFixed(0)} €`, t.reports.totalRevenue]} />
               </PieChart>
             </ResponsiveContainer>
           ) : (
@@ -370,7 +372,7 @@ export default function ReportsScreen() {
                 <TableCell style={{ fontWeight: 500 }}>{p.name}</TableCell>
                 <TableCell style={{ color: "#49454F" }}>{p.qty}</TableCell>
                 <TableCell style={{ fontWeight: 700, color: colors.primary }}>
-                  ${p.revenue.toFixed(2)}
+                  {p.revenue.toFixed(0)} €
                 </TableCell>
                 <TableCell>
                   <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
@@ -440,7 +442,7 @@ export default function ReportsScreen() {
               <TableCell style={{ color: "#79747E" }}>
                 {sale.items.length} item{sale.items.length !== 1 ? "s" : ""}
               </TableCell>
-              <TableCell style={{ fontWeight: 700 }}>${sale.total.toFixed(2)}</TableCell>
+              <TableCell style={{ fontWeight: 700 }}>{sale.total.toFixed(0)} €</TableCell>
               <TableCell style={{ color: "#49454F" }}>
                 {sale.paymentMethod.replace(/_/g, " ")}
               </TableCell>

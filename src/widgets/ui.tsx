@@ -9,6 +9,7 @@
 
 import React from "react";
 import { X, AlertCircle, CheckCircle, Info } from "lucide-react";
+import { useTranslation } from "@/i18n/provider";
 
 // ─── Color System (Material 3) ────────────────────────────────────────────────
 export const colors = {
@@ -54,6 +55,24 @@ const statusConfig = {
 };
 
 export function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
+  const statusLabels: Record<string, string> = {
+    in_stock: t.status.in_stock,
+    low_stock: t.status.low_stock,
+    out_of_stock: t.status.out_of_stock,
+    active: t.customers.active,
+    inactive: t.customers.inactive,
+    completed: t.sales.completed,
+    pending: t.sales.pending,
+    processing: t.reports.thisMonth, // Using closest available
+    cancelled: t.sales.cancelled,
+    refunded: t.sales.refunded,
+    cash: t.sales.paymentMethods.cash,
+    credit_card: t.sales.paymentMethods.credit_card,
+    debit_card: t.sales.paymentMethods.debit_card,
+    paypal: t.sales.paymentMethods.paypal,
+    bank_transfer: t.sales.paymentMethods.bank_transfer,
+  };
   const cfg = statusConfig[status as keyof typeof statusConfig] ?? {
     bg: "#F5F5F5",
     color: "#616161",
@@ -73,7 +92,7 @@ export function StatusBadge({ status }: { status: string }) {
         whiteSpace: "nowrap",
       }}
     >
-      {cfg.label}
+      {statusLabels[status] || cfg.label}
     </span>
   );
 }

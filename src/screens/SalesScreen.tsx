@@ -33,6 +33,8 @@ import {
   Printer,
   Trash2,
 } from "lucide-react";
+import { useTranslation } from "@/i18n/provider";
+import PrintableInvoice from "@/components/PrintableInvoice";
 
 const PAYMENT_METHODS = [
   { value: "cash", label: "Cash" },
@@ -52,6 +54,7 @@ function NewSaleDialog({
   onClose: () => void;
   onSave: (sale: Omit<Sale, "id" | "invoiceNumber" | "createdAt">) => void;
 }) {
+  const { t } = useTranslation();
   const { products, customers } = useAppStore();
   const [customerId, setCustomerId] = useState(customers[0]?.id ?? "");
   const [items, setItems] = useState<SaleItem[]>([]);
@@ -72,7 +75,7 @@ function NewSaleDialog({
     if (!product) return;
     const quantity = parseInt(qty) || 1;
     if (quantity > product.stock) {
-      setError(`Only ${product.stock} units available for ${product.name}`);
+      setError(t.errors.insufficientStock);
       return;
     }
     setError("");
@@ -105,12 +108,12 @@ function NewSaleDialog({
 
   const handleSubmit = () => {
     if (items.length === 0) {
-      setError("Please add at least one product");
+      setError(t.errors.required);
       return;
     }
     onSave({
       customerId,
-      customerName: customer?.name ?? "Walk-in Customer",
+      customerName: customer?.name ?? t.sales.walkInCustomer,
       items,
       subtotal,
       tax: parseFloat(tax || "0"),
@@ -124,15 +127,15 @@ function NewSaleDialog({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} title="Create New Sale" maxWidth="600px">
+    <Dialog open={open} onClose={onClose} title={t.sales.createSale} maxWidth="600px">
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
         {/* Customer */}
         <SelectField
-          label="Customer"
+          label={t.sales.customer}
           value={customerId}
           onChange={setCustomerId}
           options={[
-            { value: "", label: "Walk-in Customer" },
+            { value: "", label: t.sales.walkInCustomer },
             ...customers.map((c) => ({ value: c.id, label: c.name })),
           ]}
         />
@@ -146,7 +149,7 @@ function NewSaleDialog({
           }}
         >
           <p style={{ fontSize: "13px", fontWeight: 600, color: "#49454F", marginBottom: "10px" }}>
-            ADD PRODUCT
+            {t.sales.addProduct.toUpperCase()}
           </p>
           <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
             <select
@@ -166,7 +169,7 @@ function NewSaleDialog({
             >
               {products.map((p) => (
                 <option key={p.id} value={p.id} disabled={p.stock === 0}>
-                  {p.name} — ${p.price.toFixed(2)} ({p.stock} left)
+                  {p.name} — {p.price.toFixed(0)} € ({p.stock} left)
                 </option>
               ))}
             </select>
@@ -228,9 +231,9 @@ function NewSaleDialog({
                   <tr key={item.productId} style={{ borderTop: "1px solid #F4EFF4" }}>
                     <td style={{ padding: "8px 12px", fontSize: "13px" }}>{item.productName}</td>
                     <td style={{ padding: "8px 12px", fontSize: "13px" }}>{item.quantity}</td>
-                    <td style={{ padding: "8px 12px", fontSize: "13px" }}>${item.unitPrice.toFixed(2)}</td>
+                    <td style={{ padding: "8px 12px", fontSize: "13px" }}>{item.unitPrice.toFixed(0)} €</td>
                     <td style={{ padding: "8px 12px", fontSize: "13px", fontWeight: 600, color: colors.primary }}>
-                      ${item.subtotal.toFixed(2)}
+                      {item.subtotal.toFixed(0)} €
                     </td>
                     <td style={{ padding: "8px 12px" }}>
                       <button
@@ -265,8 +268,8 @@ function NewSaleDialog({
           }}
         >
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span style={{ fontSize: "13px", color: "#49454F" }}>Subtotal</span>
-            <span style={{ fontSize: "13px", fontWeight: 600 }}>${subtotal.toFixed(2)}</span>
+            <span style={{ fontSize: "13px", color: "#49454F" }}>Sous-total</span>
+            <span style={{ fontSize: "13px", fontWeight: 600 }}>{subtotal.toFixed(0)} €</span>
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <span style={{ fontSize: "13px", color: "#49454F" }}>Tax (%)</span>
@@ -286,8 +289,8 @@ function NewSaleDialog({
             />
           </div>
           <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <span style={{ fontSize: "13px", color: "#49454F" }}>Tax Amount</span>
-            <span style={{ fontSize: "13px" }}>${taxAmount.toFixed(2)}</span>
+            <span style={{ fontSize: "13px", color: "#49454F" }}>Montant taxe</span>
+            <span style={{ fontSize: "13px" }}>{taxAmount.toFixed(0)} €</span>
           </div>
           <div
             style={{
@@ -299,7 +302,7 @@ function NewSaleDialog({
           >
             <span style={{ fontSize: "15px", fontWeight: 700, color: "#1C1B1F" }}>Total</span>
             <span style={{ fontSize: "18px", fontWeight: 700, color: colors.primary }}>
-              ${total.toFixed(2)}
+              {total.toFixed(0)} €
             </span>
           </div>
         </div>
@@ -343,6 +346,7 @@ function InvoiceDialog({
   onClose: () => void;
   onStatusChange: (status: Sale["status"]) => void;
 }) {
+  const { t } = useTranslation();
   return (
     <Dialog open={true} onClose={onClose} title={`Invoice ${sale.invoiceNumber}`}>
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
@@ -397,11 +401,11 @@ function InvoiceDialog({
               <div>
                 <p style={{ fontSize: "14px", fontWeight: 500 }}>{item.productName}</p>
                 <p style={{ fontSize: "12px", color: "#79747E" }}>
-                  ${item.unitPrice.toFixed(2)} × {item.quantity}
+                  {item.unitPrice.toFixed(0)} € × {item.quantity}
                 </p>
               </div>
               <p style={{ fontSize: "15px", fontWeight: 600, color: colors.primary }}>
-                ${item.subtotal.toFixed(2)}
+                {item.subtotal.toFixed(0)} €
               </p>
             </div>
           ))}
@@ -410,8 +414,8 @@ function InvoiceDialog({
         {/* Totals */}
         <div style={{ background: "#F6F2FF", borderRadius: "10px", padding: "14px" }}>
           {[
-            { label: "Subtotal", value: `$${sale.subtotal.toFixed(2)}` },
-            { label: `Tax (${sale.tax}%)`, value: `$${sale.taxAmount.toFixed(2)}` },
+            { label: t.sales.subtotal, value: `${sale.subtotal.toFixed(0)} €` },
+            { label: `${t.sales.tax} (${sale.tax}%)`, value: `${sale.taxAmount.toFixed(0)} €` },
           ].map((row) => (
             <div key={row.label} style={{ display: "flex", justifyContent: "space-between", marginBottom: "6px" }}>
               <span style={{ fontSize: "13px", color: "#49454F" }}>{row.label}</span>
@@ -429,7 +433,7 @@ function InvoiceDialog({
           >
             <span style={{ fontSize: "15px", fontWeight: 700 }}>Total</span>
             <span style={{ fontSize: "18px", fontWeight: 700, color: colors.primary }}>
-              ${sale.total.toFixed(2)}
+              {sale.total.toFixed(0)} €
             </span>
           </div>
         </div>
@@ -483,6 +487,7 @@ function InvoiceDialog({
 
 // ─── Sales Screen ─────────────────────────────────────────────────────────────
 export default function SalesScreen() {
+  const { t } = useTranslation();
   const { sales, products, addSale, updateSaleStatus, upsertProduct } = useAppStore();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -536,14 +541,14 @@ export default function SalesScreen() {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
         <div>
-          <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#1C1B1F" }}>Sales</h2>
+          <h2 style={{ fontSize: "22px", fontWeight: 700, color: "#1C1B1F" }}>{t.sales.title}</h2>
           <p style={{ fontSize: "13px", color: "#79747E", marginTop: "2px" }}>
-            {sales.length} total · $
+            {sales.length} {t.sales.totalSales.toLowerCase()} · €
             {sales
               .filter((s) => s.status === "completed")
               .reduce((sum, s) => sum + s.total, 0)
-              .toFixed(2)}{" "}
-            revenue
+              .toFixed(0)}{" "}
+            {t.reports.totalRevenue.toLowerCase()}
           </p>
         </div>
         <Button icon={<Plus size={16} />} onClick={() => setNewSaleOpen(true)}>
@@ -630,9 +635,9 @@ export default function SalesScreen() {
               <TableCell style={{ color: "#79747E" }}>
                 {sale.items.length} item{sale.items.length !== 1 ? "s" : ""}
               </TableCell>
-              <TableCell>${sale.subtotal.toFixed(2)}</TableCell>
+              <TableCell>{sale.subtotal.toFixed(0)} €</TableCell>
               <TableCell style={{ color: "#79747E" }}>{sale.tax}%</TableCell>
-              <TableCell style={{ fontWeight: 700 }}>${sale.total.toFixed(2)}</TableCell>
+              <TableCell style={{ fontWeight: 700 }}>{sale.total.toFixed(0)} €</TableCell>
               <TableCell style={{ color: "#49454F" }}>
                 {sale.paymentMethod.replace(/_/g, " ")}
               </TableCell>
