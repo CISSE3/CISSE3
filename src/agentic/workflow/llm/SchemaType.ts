@@ -1,0 +1,8 @@
+export enum SchemaType {
+  INT = "INT",
+  STRING = "STRING",
+  BOOLEAN = "BOOLEAN",
+  LIST_INT = "LIST_INT",
+  LIST_STRING = "LIST_STRING",
+  MAP_STRING_STRING = "MAP_STRING_STRING",
+}

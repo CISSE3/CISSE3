@@ -102,3 +102,4 @@ export async function GET() {
 |------|---------|
 | Initial | Template created with base setup |
 | 2026-03-01 | Built complete Shop Management System with Material Design UI |
+| 2026-05-17 | Created `SchemaType` enum at `src/agentic/workflow/llm/SchemaType.ts` for agentic workflow LLM structured output field types, lint and typecheck passing |
